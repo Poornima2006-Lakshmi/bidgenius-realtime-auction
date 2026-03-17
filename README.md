@@ -2,6 +2,9 @@
 
 A real-time online auction and bidding platform built for hackathon demonstration.
 
+## 🌐 Live Demo
+🔗 https://bid-genius--lakshmipoornima.replit.app/
+
 ## Overview
 
 BidGenius is a full-stack web application where an Admin creates and manages auctions, assigns credits to bidders, and monitors live activity. Bidders register, browse auctions, place real-time bids using credits, receive live updates, and get strategic bid suggestions from the Smart Bid Recommendation System.
