@@ -1,22 +1,30 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: BidGenius API specification
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: auth
+    description: Authentication operations
+  - name: auctions
+    description: Auction operations
+  - name: bids
+    description: Bidding operations
+  - name: users
+    description: User management operations
+  - name: admin
+    description: Admin operations
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +32,352 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register a new bidder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterRequest"
+      responses:
+        "201":
+          description: User registered
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginRequest"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/logout:
+    post:
+      operationId: logout
+      tags: [auth]
+      summary: Logout
+      responses:
+        "200":
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auctions:
+    get:
+      operationId: getAuctions
+      tags: [auctions]
+      summary: Get all auctions
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [upcoming, active, ended]
+      responses:
+        "200":
+          description: List of auctions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Auction"
+    post:
+      operationId: createAuction
+      tags: [auctions]
+      summary: Create a new auction (admin only)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAuctionRequest"
+      responses:
+        "201":
+          description: Auction created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Auction"
+        "403":
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auctions/{id}:
+    get:
+      operationId: getAuction
+      tags: [auctions]
+      summary: Get auction by ID
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Auction details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuctionDetail"
+        "404":
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      operationId: updateAuction
+      tags: [auctions]
+      summary: Update auction (admin only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateAuctionRequest"
+      responses:
+        "200":
+          description: Auction updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Auction"
+
+  /auctions/{id}/bids:
+    get:
+      operationId: getAuctionBids
+      tags: [bids]
+      summary: Get bids for an auction
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of bids
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Bid"
+    post:
+      operationId: placeBid
+      tags: [bids]
+      summary: Place a bid
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PlaceBidRequest"
+      responses:
+        "201":
+          description: Bid placed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bid"
+        "400":
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auctions/{id}/recommendation:
+    get:
+      operationId: getBidRecommendation
+      tags: [auctions]
+      summary: Get smart bid recommendation
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Bid recommendation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BidRecommendation"
+
+  /admin/users:
+    get:
+      operationId: getUsers
+      tags: [admin]
+      summary: Get all users (admin only)
+      responses:
+        "200":
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
+  /admin/users/{id}/credits:
+    patch:
+      operationId: assignCredits
+      tags: [admin]
+      summary: Assign credits to user (admin only)
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AssignCreditsRequest"
+      responses:
+        "200":
+          description: Credits assigned
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  /admin/stats:
+    get:
+      operationId: getAdminStats
+      tags: [admin]
+      summary: Get admin dashboard stats
+      responses:
+        "200":
+          description: Admin stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+
+  /admin/generate-description:
+    post:
+      operationId: generateDescription
+      tags: [admin]
+      summary: AI-style auction description generator
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GenerateDescriptionRequest"
+      responses:
+        "200":
+          description: Generated description
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GenerateDescriptionResponse"
+
+  /users/me/bids:
+    get:
+      operationId: getMyBids
+      tags: [users]
+      summary: Get current user's bid history
+      responses:
+        "200":
+          description: Bid history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/BidWithAuction"
+
+  /users/me/wins:
+    get:
+      operationId: getMyWins
+      tags: [users]
+      summary: Get auctions won by current user
+      responses:
+        "200":
+          description: Won auctions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Auction"
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +388,330 @@ components:
       required:
         - status
 
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+      required:
+        - error
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+
+    RegisterRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+      required:
+        - name
+        - email
+        - password
+
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        role:
+          type: string
+          enum: [admin, bidder]
+          default: bidder
+      required:
+        - email
+        - password
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        message:
+          type: string
+      required:
+        - user
+
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+          enum: [admin, bidder]
+        totalCredits:
+          type: integer
+        reservedCredits:
+          type: integer
+        availableCredits:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - email
+        - role
+        - totalCredits
+        - reservedCredits
+        - availableCredits
+        - createdAt
+
+    Auction:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        description:
+          type: string
+        imageUrl:
+          type: string
+          nullable: true
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        minBid:
+          type: integer
+        bidIncrement:
+          type: integer
+        currentBid:
+          type: integer
+        highestBidderId:
+          type: integer
+          nullable: true
+        highestBidderName:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [upcoming, active, ended]
+        winnerId:
+          type: integer
+          nullable: true
+        winnerName:
+          type: string
+          nullable: true
+        totalBids:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - description
+        - startTime
+        - endTime
+        - minBid
+        - bidIncrement
+        - currentBid
+        - status
+        - totalBids
+        - createdAt
+
+    AuctionDetail:
+      allOf:
+        - $ref: "#/components/schemas/Auction"
+        - type: object
+          properties:
+            bids:
+              type: array
+              items:
+                $ref: "#/components/schemas/Bid"
+          required:
+            - bids
+
+    CreateAuctionRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        imageUrl:
+          type: string
+          nullable: true
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        minBid:
+          type: integer
+          minimum: 1
+        bidIncrement:
+          type: integer
+          minimum: 1
+      required:
+        - title
+        - description
+        - startTime
+        - endTime
+        - minBid
+        - bidIncrement
+
+    UpdateAuctionRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        imageUrl:
+          type: string
+          nullable: true
+
+    PlaceBidRequest:
+      type: object
+      properties:
+        amount:
+          type: integer
+          minimum: 1
+      required:
+        - amount
+
+    Bid:
+      type: object
+      properties:
+        id:
+          type: integer
+        auctionId:
+          type: integer
+        userId:
+          type: integer
+        userName:
+          type: string
+        amount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - auctionId
+        - userId
+        - userName
+        - amount
+        - createdAt
+
+    BidWithAuction:
+      allOf:
+        - $ref: "#/components/schemas/Bid"
+        - type: object
+          properties:
+            auctionTitle:
+              type: string
+            auctionStatus:
+              type: string
+              enum: [upcoming, active, ended]
+            isHighestBid:
+              type: boolean
+          required:
+            - auctionTitle
+            - auctionStatus
+            - isHighestBid
+
+    BidRecommendation:
+      type: object
+      properties:
+        suggestedBid:
+          type: integer
+        strategy:
+          type: string
+          enum: [safe, aggressive, moderate]
+        reasoning:
+          type: string
+        confidence:
+          type: integer
+          minimum: 0
+          maximum: 100
+      required:
+        - suggestedBid
+        - strategy
+        - reasoning
+        - confidence
+
+    AssignCreditsRequest:
+      type: object
+      properties:
+        amount:
+          type: integer
+          minimum: 1
+        action:
+          type: string
+          enum: [add, set]
+          default: add
+      required:
+        - amount
+
+    AdminStats:
+      type: object
+      properties:
+        totalAuctions:
+          type: integer
+        activeAuctions:
+          type: integer
+        endedAuctions:
+          type: integer
+        upcomingAuctions:
+          type: integer
+        totalBidders:
+          type: integer
+        totalBids:
+          type: integer
+        recentActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/Bid"
+      required:
+        - totalAuctions
+        - activeAuctions
+        - endedAuctions
+        - upcomingAuctions
+        - totalBidders
+        - totalBids
+        - recentActivity
+
+    GenerateDescriptionRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        keywords:
+          type: string
+      required:
+        - title
+
+    GenerateDescriptionResponse:
+      type: object
+      properties:
+        description:
+          type: string
+      required:
+        - description

@@ -1,0 +1,20 @@
+packages:
+  "socket.io-client": "Real-time bidirectional event-based communication for live bidding"
+  "framer-motion": "Premium page transitions, micro-interactions, and complex layout animations"
+  "date-fns": "Formatting and manipulating dates for countdown timers and histories"
+  "recharts": "Beautiful data visualization for the admin dashboard statistics"
+  "clsx": "Utility for constructing className strings conditionally"
+  "tailwind-merge": "Utility function to efficiently merge Tailwind CSS classes"
+
+images:
+  - path: "artifacts/bidgenius/public/images/auth-bg.png"
+    description: "Abstract luxurious dark theme background, deep purples and golds, soft cinematic lighting, premium auction house atmosphere, blurred depth of field"
+    aspect_ratio: "16:9"
+  - path: "artifacts/bidgenius/public/images/logo-icon.png"
+    description: "Minimalist modern geometric gavel icon, vibrant purple gradient on transparent background"
+    aspect_ratio: "1:1"
+
+notes:
+  - "Assuming Orval generated hooks from @workspace/api-client-react work seamlessly with React Query v5"
+  - "Authentication is session/cookie based; we use useGetMe() to check auth state on load"
+  - "Socket.io connects to window.location.origin by default"

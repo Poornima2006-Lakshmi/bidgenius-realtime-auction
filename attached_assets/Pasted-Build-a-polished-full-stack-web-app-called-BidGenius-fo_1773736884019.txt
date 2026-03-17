@@ -1,0 +1,234 @@
+Build a polished full-stack web app called “BidGenius” for a hackathon. The goal is to create a real-time auction and bidding platform with a strong demo, clean UI, solid functionality, and one standout unique feature.
+
+Priority:
+Focus first on working core functionality, clean user flows, and a smooth live demo. Avoid unnecessary complexity. Make the product feel real, modern, and easy to understand.
+
+Tech stack:
+- Frontend: React + Tailwind CSS + Vite
+- Backend: Node.js + Express
+- Database: PostgreSQL with Drizzle ORM
+- Real-time: Socket.io
+- Deployment-ready for Replit
+- Clean code structure and reusable components
+
+Main product idea:
+BidGenius is a real-time online auction platform where an Admin creates and manages auctions, assigns credits to bidders, and monitors activity. Bidders register, log in, browse auctions, place bids using credits, receive live updates, and see strategic bid suggestions.
+
+Core roles:
+1. Admin
+2. Bidder
+
+Authentication:
+- Role-based authentication
+- Separate admin and bidder login experience
+- Bidder registration and login
+- Seed one admin account
+- Allow easy creation of bidder accounts for demo
+- Protect admin routes
+
+Admin requirements:
+- Admin dashboard with summary cards:
+  - total auctions
+  - active auctions
+  - ended auctions
+  - total bidders
+  - total bids
+- Create auction form with:
+  - title
+  - description
+  - image URL
+  - start time
+  - end time
+  - minimum bid
+  - bid increment
+- View all auctions
+- View auction details
+- Assign and increase credits for registered bidders
+- Monitor bids in real time
+- View bid history
+- Declare winner automatically when auction ends
+- Show simple analytics:
+  - highest bid per auction
+  - number of bidders per auction
+  - total bids per auction
+
+Bidder requirements:
+- Register and login
+- Bidder dashboard showing:
+  - available credits
+  - reserved credits
+  - bidding history
+  - auctions won
+- Browse active auctions with a polished card layout
+- Auction details page showing:
+  - image
+  - title
+  - description
+  - current highest bid
+  - time remaining
+  - bid increment
+  - bid history
+  - bid input and button
+- Place bids in real time
+- Receive outbid notifications
+- Receive winner/loser status after auction ends
+
+Auction logic:
+- Auction statuses:
+  - upcoming
+  - active
+  - ended
+- Bidding allowed only while auction is active
+- Bid must be greater than current bid by the required increment
+- Highest valid bidder at end time wins
+- Auction should auto-end based on timer
+- Winner should be auto-declared
+- Maintain full bid history with timestamps
+
+Credits logic:
+- New bidders register with 0 credits
+- Admin assigns credits to bidders
+- Bidders cannot add their own credits
+- If bidder does not have enough usable credits, block the bid and show “Insufficient credits”
+- Use reserved-credit logic:
+  - when a bidder becomes highest bidder, that bid amount is reserved
+  - when outbid, reserved credits are released back
+  - when auction ends, only the winner’s reserved credits are finally deducted
+- Clearly show available credits and reserved credits in UI
+
+Main unique feature:
+Smart Bid Recommendation System for bidders
+
+This feature is essential and must be implemented properly.
+
+Smart Bid Recommendation System requirements:
+- Show a recommended next bid on the auction details page
+- Recommendation should be based on:
+  - current highest bid
+  - bid increment
+  - number of recent bidders or bidding activity
+  - time remaining
+  - bidder’s available credits
+- Make it feel smart and useful
+- Example:
+  Current Bid: 120 credits
+  Time Remaining: 45 seconds
+  Suggested Strategic Bid: 135 credits
+- Add a small label like:
+  - Strategy: Safe / Aggressive
+- Keep this feature simple, practical, and demo-friendly
+
+Extra smart feature:
+Add an AI-style Auction Description Generator in the admin panel
+- Admin enters item title or keywords
+- System generates a polished auction description
+- If no external AI API is configured, use a local smart template generator so the feature still works in the demo
+
+UI/UX requirements:
+- Modern and clean interface
+- Tailwind CSS
+- Responsive design
+- Strong visual hierarchy
+- Auction cards should look attractive and professional
+- Use badges for auction status
+- Use toast notifications for success, error, and outbid updates
+- Make countdown timers visually clear
+- Admin dashboard and bidder dashboard should feel like real products, not plain forms
+
+Important demo flow:
+The app must support this demo smoothly:
+1. Admin logs in
+2. Admin creates an auction
+3. Admin assigns credits to bidders
+4. Bidder registers or logs in
+5. Bidder opens auction page
+6. Bidder places a bid
+7. Another bidder in another tab/session places a higher bid
+8. Real-time highest bid updates instantly
+9. Outbid notification appears
+10. Smart Bid Recommendation is visible
+11. Auction timer ends
+12. Winner is declared automatically
+13. Credits are settled correctly
+14. Admin sees analytics and bid history
+
+Database models:
+Create at minimum:
+- users
+- auctions
+- bids
+- optionally a credit_transactions table for clarity
+
+Suggested user fields:
+- id
+- name
+- email
+- password_hash
+- role
+- total_credits
+- reserved_credits
+- created_at
+
+Suggested auction fields:
+- id
+- title
+- description
+- image_url
+- start_time
+- end_time
+- min_bid
+- bid_increment
+- current_bid
+- highest_bidder_id
+- status
+- created_by
+- created_at
+
+Suggested bid fields:
+- id
+- auction_id
+- user_id
+- amount
+- created_at
+
+Realtime requirements:
+- Use Socket.io for:
+  - live bid updates
+  - outbid notifications
+  - auction end updates
+- Keep realtime behavior simple and reliable
+
+Seed/demo data:
+- Seed 1 admin account
+- Seed 2 or 3 bidder accounts
+- Seed 2 sample auctions
+- Make demo credentials easy to find
+
+Project quality requirements:
+- Clean folder structure
+- Reusable components
+- Organized routes, controllers, services, and database files
+- Loading states
+- Error handling
+- Validation for bids and credits
+- README.md with:
+  - project overview
+  - tech stack
+  - features
+  - setup instructions
+  - demo credentials
+  - known limitations
+
+Important constraints:
+- Do not add payment gateways
+- Do not add blockchain or unnecessary features
+- Prioritize business functionality, real-time bidding, and demo polish
+- The app must be understandable and editable after generation
+- Keep it hackathon-friendly, stable, and easy to present
+
+At the end, generate:
+- complete project structure
+- frontend and backend code
+- seed data
+- README
+- demo credentials
