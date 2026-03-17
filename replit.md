@@ -1,8 +1,8 @@
-# Workspace
+# BidGenius Workspace
 
 ## Overview
 
-pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
+BidGenius is a full-stack real-time auction and bidding platform. It uses a pnpm monorepo with TypeScript. The frontend is a React + Vite app, the backend is Express 5, and PostgreSQL with Drizzle ORM handles persistence. Socket.io provides real-time communication.
 
 ## Stack
 
@@ -10,87 +10,105 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **Node.js version**: 24
 - **Package manager**: pnpm
 - **TypeScript version**: 5.9
-- **API framework**: Express 5
+- **Frontend**: React 19 + Vite + Tailwind CSS 4
+- **API framework**: Express 5 + Socket.io
 - **Database**: PostgreSQL + Drizzle ORM
-- **Validation**: Zod (`zod/v4`), `drizzle-zod`
-- **API codegen**: Orval (from OpenAPI spec)
-- **Build**: esbuild (CJS bundle)
+- **Auth**: express-session + Node.js crypto (scrypt)
+- **Validation**: Zod (zod/v4), drizzle-zod
+- **API codegen**: Orval (from OpenAPI 3.1 spec)
+- **State management**: TanStack React Query
+- **Routing**: Wouter
 
 ## Structure
 
 ```text
-artifacts-monorepo/
-├── artifacts/              # Deployable applications
-│   └── api-server/         # Express API server
-├── lib/                    # Shared libraries
-│   ├── api-spec/           # OpenAPI spec + Orval codegen config
-│   ├── api-client-react/   # Generated React Query hooks
-│   ├── api-zod/            # Generated Zod schemas from OpenAPI
-│   └── db/                 # Drizzle ORM schema + DB connection
-├── scripts/                # Utility scripts (single workspace package)
-│   └── src/                # Individual .ts scripts, run via `pnpm --filter @workspace/scripts run <script>`
-├── pnpm-workspace.yaml     # pnpm workspace (artifacts/*, lib/*, lib/integrations/*, scripts)
-├── tsconfig.base.json      # Shared TS options (composite, bundler resolution, es2022)
-├── tsconfig.json           # Root TS project references
-└── package.json            # Root package with hoisted devDeps
+├── artifacts/
+│   ├── api-server/          # Express API server (port 8080)
+│   │   └── src/
+│   │       ├── app.ts              # Express + session + Socket.io setup
+│   │       ├── index.ts            # HTTP server entry
+│   │       ├── lib/
+│   │       │   ├── auth.ts         # Password hashing (scrypt)
+│   │       │   ├── socket.ts       # Socket.io initialization + emitters
+│   │       │   └── auction-scheduler.ts  # 5s interval: auto-start/end auctions
+│   │       └── routes/
+│   │           ├── auth.ts         # POST /auth/login|register, GET /auth/me, POST /auth/logout
+│   │           ├── auctions.ts     # CRUD /auctions, POST /auctions/:id/bids, GET /auctions/:id/recommendation
+│   │           ├── admin.ts        # /admin/users, /admin/stats, /admin/generate-description
+│   │           └── users.ts        # /users/me/bids, /users/me/wins
+│   └── bidgenius/           # React + Vite frontend (port 22910, served at /)
+│       └── src/
+│           ├── components/
+│           │   ├── auth-context.tsx   # Global auth state via React context
+│           │   ├── layout.tsx         # App shell with sidebar nav
+│           │   ├── auction-card.tsx   # Auction listing card
+│           │   ├── bid-recommendation-panel.tsx  # Smart bid suggestions
+│           │   └── countdown-timer.tsx
+│           ├── hooks/
+│           │   └── use-socket.ts     # Socket.io client hook
+│           └── pages/
+│               ├── login.tsx         # Login + register
+│               ├── dashboard.tsx     # Bidder dashboard
+│               ├── auctions.tsx      # Auction browser
+│               ├── auction-detail.tsx # Auction detail + bidding
+│               └── admin/            # Admin pages
+├── lib/
+│   ├── api-spec/            # OpenAPI 3.1 spec (openapi.yaml)
+│   ├── api-client-react/    # Generated React Query hooks
+│   ├── api-zod/             # Generated Zod schemas
+│   └── db/
+│       └── src/schema/      # users.ts, auctions.ts, bids.ts
+└── scripts/
+    └── src/seed.ts          # Seed demo accounts + auctions
 ```
 
-## TypeScript & Composite Projects
+## Demo Credentials
 
-Every package extends `tsconfig.base.json` which sets `composite: true`. The root `tsconfig.json` lists all packages as project references. This means:
+| Role   | Email                  | Password  |
+|--------|------------------------|-----------|
+| Admin  | admin@bidgenius.com    | admin123  |
+| Bidder | alice@bidgenius.com    | alice123  |
+| Bidder | bob@bidgenius.com      | bob123    |
+| Bidder | carol@bidgenius.com    | carol123  |
 
-- **Always typecheck from the root** — run `pnpm run typecheck` (which runs `tsc --build --emitDeclarationOnly`). This builds the full dependency graph so that cross-package imports resolve correctly. Running `tsc` inside a single package will fail if its dependencies haven't been built yet.
-- **`emitDeclarationOnly`** — we only emit `.d.ts` files during typecheck; actual JS bundling is handled by esbuild/tsx/vite...etc, not `tsc`.
-- **Project references** — when package A depends on package B, A's `tsconfig.json` must list B in its `references` array. `tsc --build` uses this to determine build order and skip up-to-date packages.
+## Key Features
 
-## Root Scripts
+1. **Role-based auth** (admin vs bidder) via session cookies
+2. **Real-time bidding** via Socket.io - bid events broadcast to auction rooms
+3. **Smart Bid Recommendation** - strategy-based (safe/moderate/aggressive) based on time remaining, competition, and available credits
+4. **Reserved credit system** - credits reserved when leading, released when outbid
+5. **Auto-auction lifecycle** - scheduler runs every 5s to update upcoming→active→ended
+6. **AI-style description generator** - template-based for creating auction descriptions
+7. **Admin dashboard** with live activity feed and analytics
 
-- `pnpm run build` — runs `typecheck` first, then recursively runs `build` in all packages that define it
-- `pnpm run typecheck` — runs `tsc --build --emitDeclarationOnly` using project references
+## Common Commands
 
-## Packages
+```bash
+# Run codegen after OpenAPI spec changes
+pnpm --filter @workspace/api-spec run codegen
 
-### `artifacts/api-server` (`@workspace/api-server`)
+# Push DB schema
+pnpm --filter @workspace/db run push
 
-Express 5 API server. Routes live in `src/routes/` and use `@workspace/api-zod` for request and response validation and `@workspace/db` for persistence.
+# Seed demo data
+pnpm --filter @workspace/scripts run seed
 
-- Entry: `src/index.ts` — reads `PORT`, starts Express
-- App setup: `src/app.ts` — mounts CORS, JSON/urlencoded parsing, routes at `/api`
-- Routes: `src/routes/index.ts` mounts sub-routers; `src/routes/health.ts` exposes `GET /health` (full path: `/api/health`)
-- Depends on: `@workspace/db`, `@workspace/api-zod`
-- `pnpm --filter @workspace/api-server run dev` — run the dev server
-- `pnpm --filter @workspace/api-server run build` — production esbuild bundle (`dist/index.cjs`)
-- Build bundles an allowlist of deps (express, cors, pg, drizzle-orm, zod, etc.) and externalizes the rest
+# Dev servers
+pnpm --filter @workspace/api-server run dev
+pnpm --filter @workspace/bidgenius run dev
+```
 
-### `lib/db` (`@workspace/db`)
+## Socket.io Events
 
-Database layer using Drizzle ORM with PostgreSQL. Exports a Drizzle client instance and schema models.
+- `auction:join` (emit) → join an auction room
+- `auction:leave` (emit) → leave a room
+- `bid:placed` (on) → new bid placed: `{ auctionId, bid, currentBid, highestBidderId }`
+- `auction:ended` (on) → auction ended: `{ auctionId, winnerId, winnerName, finalBid }`
+- `bid:outbid` (on) → user was outbid: `{ auctionId, previousBidderId, newBid, newBidderName }`
 
-- `src/index.ts` — creates a `Pool` + Drizzle instance, exports schema
-- `src/schema/index.ts` — barrel re-export of all models
-- `src/schema/<modelname>.ts` — table definitions with `drizzle-zod` insert schemas (no models definitions exist right now)
-- `drizzle.config.ts` — Drizzle Kit config (requires `DATABASE_URL`, automatically provided by Replit)
-- Exports: `.` (pool, db, schema), `./schema` (schema only)
+## Architecture Notes
 
-Production migrations are handled by Replit when publishing. In development, we just use `pnpm --filter @workspace/db run push`, and we fallback to `pnpm --filter @workspace/db run push-force`.
-
-### `lib/api-spec` (`@workspace/api-spec`)
-
-Owns the OpenAPI 3.1 spec (`openapi.yaml`) and the Orval config (`orval.config.ts`). Running codegen produces output into two sibling packages:
-
-1. `lib/api-client-react/src/generated/` — React Query hooks + fetch client
-2. `lib/api-zod/src/generated/` — Zod schemas
-
-Run codegen: `pnpm --filter @workspace/api-spec run codegen`
-
-### `lib/api-zod` (`@workspace/api-zod`)
-
-Generated Zod schemas from the OpenAPI spec (e.g. `HealthCheckResponse`). Used by `api-server` for response validation.
-
-### `lib/api-client-react` (`@workspace/api-client-react`)
-
-Generated React Query hooks and fetch client from the OpenAPI spec (e.g. `useHealthCheck`, `healthCheck`).
-
-### `scripts` (`@workspace/scripts`)
-
-Utility scripts package. Each script is a `.ts` file in `src/` with a corresponding npm script in `package.json`. Run scripts via `pnpm --filter @workspace/scripts run <script>`. Scripts can import any workspace package (e.g., `@workspace/db`) by adding it as a dependency in `scripts/package.json`.
+- Backend exports `httpServer` (not `app`) so Socket.io can attach to the same HTTP server
+- Sessions use in-memory store (upgrade to Redis for production)
+- Custom fetch adds `credentials: 'include'` so session cookies are sent on all API calls
+- Auction scheduler runs on the API server and auto-declares winners via `endAuction()`

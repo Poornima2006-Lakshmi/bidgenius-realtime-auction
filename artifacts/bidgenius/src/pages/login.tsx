@@ -3,7 +3,7 @@ import { useAuth } from '@/components/auth-context';
 import { useLocation } from 'wouter';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Gavel, Mail, Lock, User, AlertCircle, ArrowRight } from 'lucide-react';
-import { LoginRequestRole } from '@workspace/api-client-react';
+
 
 export default function Login() {
   const { login, register, isAuthenticated, isAdmin } = useAuth();
@@ -16,7 +16,7 @@ export default function Login() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<LoginRequestRole>('bidder');
+  const [role, setRole] = useState<'admin' | 'bidder'>('bidder');
 
   React.useEffect(() => {
     if (isAuthenticated) {
