@@ -3,7 +3,7 @@
 A real-time online auction and bidding platform built for hackathon demonstration.
 
 ## 🌐 Live Demo
-🔗 https://bid-genius--lakshmipoornima.replit.app/
+https://bid-genius-spark.lovable.app
 
 ## Overview
 
@@ -51,14 +51,6 @@ BidGenius is a full-stack web application where an Admin creates and manages auc
 - Winner auto-declared when timer ends
 - Full bid history with timestamps
 
-## Demo Credentials
-
-| Role   | Email                    | Password  | Credits |
-|--------|--------------------------|-----------|---------|
-| Admin  | admin@bidgenius.com      | admin123  | —       |
-| Bidder | alice@bidgenius.com      | alice123  | 1,000   |
-| Bidder | bob@bidgenius.com        | bob123    | 1,500   |
-| Bidder | carol@bidgenius.com      | carol123  | 800     |
 
 ## Demo Flow
 
